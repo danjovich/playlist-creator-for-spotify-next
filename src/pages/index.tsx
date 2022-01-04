@@ -1,4 +1,4 @@
-import type { NextPage } from 'next';
+import type { GetServerSideProps, NextPage } from 'next';
 import LoginPage from './login/index';
 
 const Home: NextPage = () => {
@@ -6,3 +6,12 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  return {
+    redirect: {
+      destination: '/login',
+      permanent: true
+    }
+  };
+};
