@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 export default class UserServices {
-  public static async getSpotifyTokenFromCode(code: string) {
+  public static async getSpotifyTokenFromCode(code: string): Promise<string> {
     const response = await axios.post(`/api/login`, { code });
 
-    const { accessToken } = response.data;
+    const { access_token: accessToken } = response.data;
 
     return accessToken;
   }

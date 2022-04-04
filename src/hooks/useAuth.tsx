@@ -24,7 +24,7 @@ export const AuthProvider: React.FC = ({ children }) => {
 
       router.push('/dashboard');
     } else if (code) {
-      UserServices.getSpotifyTokensFromCode(code)
+      UserServices.getSpotifyTokenFromCode(code)
         .then((newAccessToken) => {
           setAccessToken(newAccessToken);
           setCookie(
