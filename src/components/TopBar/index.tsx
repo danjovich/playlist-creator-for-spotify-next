@@ -16,7 +16,7 @@ const TopBar: React.FC<Props> = ({ rightButton }) => {
           <MenuOutlined />
         </IconButton>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Spotify Playlist Creator
+          Playlist Creator For Spotify
         </Typography>
         {rightButton}
       </Toolbar>

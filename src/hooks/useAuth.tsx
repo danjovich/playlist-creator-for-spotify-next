@@ -16,7 +16,7 @@ export const AuthProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
 
-    const { 'spotify-playlist-creator:accessToken': cookieAccessToken } =
+    const { 'playlist-creator-for-spotify:accessToken': cookieAccessToken } =
       parseCookies();
 
     if (cookieAccessToken) {
@@ -24,12 +24,12 @@ export const AuthProvider: React.FC = ({ children }) => {
 
       router.push('/dashboard');
     } else if (code) {
-      UserServices.getSpotifyTokenFromCode(code)
+      UserServices.getSpotifyTokensFromCode(code)
         .then((newAccessToken) => {
           setAccessToken(newAccessToken);
           setCookie(
             undefined,
-            'spotify-playlist-creator:accessToken',
+            'playlist-creator-for-spotify:accessToken',
             newAccessToken,
             {
               maxAge: 60 * 60, // 1 hour
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC = ({ children }) => {
   }, [accessToken]);
 
   const logout = () => {
-    destroyCookie(undefined, 'spotify-playlist-creator:accessToken');
+    destroyCookie(undefined, 'playlist-creator-for-spotify:accessToken');
     router.push('/');
   };
 

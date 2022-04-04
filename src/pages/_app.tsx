@@ -10,7 +10,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
       <AppProvider>
         <Head>
           <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-          <title>Spotify Playlist Creator</title>
+          <title>Playlist Creator For Spotify</title>
         </Head>
         <GlobalStyles />
         <Component {...pageProps} />

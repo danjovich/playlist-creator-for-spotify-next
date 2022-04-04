@@ -1,5 +1,5 @@
 {
-  "name": "spotify-playlist-creator-next",
+  "name": "playlist-creator-for-spotify-next",
   "private": true,
   "scripts": {
     "dev": "next dev",
