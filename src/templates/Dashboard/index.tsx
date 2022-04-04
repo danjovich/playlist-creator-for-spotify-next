@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import { GetServerSideProps } from 'next';
-import { Button, TextField } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Button, TextField, Autocomplete } from '@mui/material';
 
 import useAuth from 'hooks/useAuth';
 import ArtistServices from 'services/ArtistServices';
@@ -11,15 +10,23 @@ import { Track } from 'interfaces';
 import TopBar from 'components/TopBar';
 import ProfileButton from 'components/ProfileButton';
 import LinearProgressWithLabel from 'components/LinearProgressWithLabel';
-import { parseCookies } from 'nookies';
+import RadioGroupWithLabel from './components/RadioGroupWithLabel/RadioGroupWithLabel';
 
 const Dashboard: React.FC = () => {
   const { accessToken } = useAuth();
+  // console.log(accessToken);
 
   const [savedTracks, setSavedTracks] = useState<Track[]>([]);
+  const [genres, setGenres] = useState<string[]>([]);
+
   const [tracksProgress, setTracksProgress] = useState(0);
   const [genresProgress, setGenresProgress] = useState(0);
+
   const [genre, setGenre] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [collaborative, setCollaborative] = useState(true);
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     const getSavedTracks = async () => {
@@ -28,11 +35,14 @@ const Dashboard: React.FC = () => {
         setTracksProgress
       );
 
-      const artistsWithGenres = await ArtistServices.getArtistsWithGenres(
-        artists,
-        setGenresProgress,
-        accessToken
-      );
+      const [artistsWithGenres, returnedGenres] =
+        await ArtistServices.getArtistsWithGenresAndGenresArray(
+          artists,
+          setGenresProgress,
+          accessToken
+        );
+
+      setGenres(returnedGenres);
 
       const tracksWithGenres = TrackServices.updateTracksArtists(
         tracks,
@@ -49,13 +59,30 @@ const Dashboard: React.FC = () => {
 
   const createPlaylist = async () => {
     const filteredTracks = TrackServices.filterByGenre(savedTracks, genre);
-    await TrackServices.createPlaylist(accessToken, filteredTracks, genre);
+    await TrackServices.createPlaylist(accessToken, filteredTracks, {
+      name,
+      description,
+      collaborative,
+      isPublic
+    });
   };
 
-  const changeGenre = (
-    e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  const onChangeGenre = (e: React.SyntheticEvent<Element, Event>) => {
+    setGenre((e.target as HTMLElement).innerText);
+  };
+
+  const onChangeCollaborative = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    value: string
   ) => {
-    setGenre(e.target.value);
+    setCollaborative(value === 'collaborative');
+  };
+
+  const onChangePublic = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    value: string
+  ) => {
+    setIsPublic(value === 'public');
   };
 
   return (
@@ -63,11 +90,32 @@ const Dashboard: React.FC = () => {
       <TopBar rightButton={<ProfileButton />} />
       <LinearProgressWithLabel value={tracksProgress} />
       <LinearProgressWithLabel value={genresProgress} />
+      <Autocomplete
+        options={genres}
+        onChange={onChangeGenre}
+        renderInput={(params) => (
+          <TextField {...params} label="Genre" variant="outlined" />
+        )}
+      />
       <TextField
-        id="outlined-basic"
-        label="Genre"
+        label="Name"
         variant="outlined"
-        onChange={changeGenre}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <TextField
+        label="Description"
+        variant="outlined"
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <RadioGroupWithLabel
+        onChange={onChangeCollaborative}
+        label="Collaborative?"
+        fields={['Collaborative', 'Not Collaborative']}
+      />
+      <RadioGroupWithLabel
+        onChange={onChangePublic}
+        label="Public or private?"
+        fields={['Public', 'Private']}
       />
       <Button onClick={createPlaylist}>Create Playlist</Button>
     </>
@@ -75,20 +123,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const { 'spotify-playlist-creator:accessToken': token } = parseCookies(ctx);
-
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false
-      }
-    };
-  }
-
-  return {
-    props: {}
-  };
-};

@@ -8,3 +8,10 @@ export interface Track {
   artists: Artist[];
   addedAt: Date;
 }
+
+export interface PlaylistOptions {
+  name: string;
+  description: string;
+  collaborative: boolean;
+  isPublic: boolean;
+}

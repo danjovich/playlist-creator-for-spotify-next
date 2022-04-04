@@ -1,5 +1,5 @@
 import SpotifyWebApi from 'spotify-web-api-node';
-import { Artist, Track } from 'interfaces';
+import { Artist, PlaylistOptions, Track } from 'interfaces';
 import ArtistServices from './ArtistServices';
 
 export default class TrackServices {
@@ -72,14 +72,16 @@ export default class TrackServices {
   public static async createPlaylist(
     accessToken: string,
     tracks: Track[],
-    name: string
+    options: PlaylistOptions
   ): Promise<void> {
     this.spotifyWebApi.setAccessToken(accessToken);
 
-    const response = await this.spotifyWebApi.createPlaylist(
-      name.replace(/^\w|\s\w/g, (c) => c.toUpperCase()),
-      { public: false }
-    );
+    const { name, isPublic, ...restOfOptions } = options;
+
+    const response = await this.spotifyWebApi.createPlaylist(name, {
+      public: isPublic,
+      ...restOfOptions
+    });
 
     const { id } = response.body;
 

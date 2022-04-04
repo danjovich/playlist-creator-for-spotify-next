@@ -26,34 +26,45 @@ export default class ArtistServices {
     return artistsArray;
   }
 
-  private static async getArtistWithGenres(
-    artist: Artist,
-    spotifyWebApi: SpotifyWebApi
-  ): Promise<Artist> {
-    const { genres } = (await spotifyWebApi.getArtist(artist.id)).body;
-
-    return { id: artist.id, genres };
-  }
-
-  public static async getArtistsWithGenres(
+  public static async getArtistsWithGenresAndGenresArray(
     artists: Artist[],
     setProgress: (value: React.SetStateAction<number>) => void,
     accessToken: string
-  ): Promise<Artist[]> {
-    const artistsWithGenres = artists;
+  ): Promise<[Artist[], string[]]> {
+    const artistsWithGenres = [] as Artist[];
+    const genres = [] as string[];
 
     const spotifyWebApi = new SpotifyWebApi({ accessToken });
 
-    for (let i = 0; i < artists.length; i++) {
-      setProgress((i / artists.length) * 100);
-      artistsWithGenres[i] = await this.getArtistWithGenres(
-        artists[i],
-        spotifyWebApi
+    const artistsIds = artists.map((artist) => artist.id);
+
+    for (let i = 0; i < artistsIds.length; i += 50) {
+      setProgress((i / artistsIds.length) * 100);
+
+      const response = await spotifyWebApi.getArtists(
+        artistsIds.slice(i, i + 50)
       );
+
+      const { artists: completeArtists } = response.body;
+
+      completeArtists
+        .map((artist) => {
+          return {
+            id: artist.id,
+            genres: artist.genres
+          };
+        })
+        .forEach((artist) => artistsWithGenres.push(artist));
     }
+
+    artistsWithGenres.forEach((artist) =>
+      artist.genres.forEach((genre) => {
+        if (!genres.includes(genre)) genres.push(genre);
+      })
+    );
 
     setProgress(100);
 
-    return artistsWithGenres;
+    return [artistsWithGenres, genres.sort()];
   }
 }
