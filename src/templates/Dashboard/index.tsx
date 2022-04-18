@@ -12,9 +12,10 @@ import ProfileButton from 'components/ProfileButton';
 import LinearProgressWithLabel from 'components/LinearProgressWithLabel';
 import RadioGroupWithLabel from './components/RadioGroupWithLabel/RadioGroupWithLabel';
 
+const steps = ['Load your songs library', 'Choose a genre', 'Choose the details', 'Create the playlist!'];
+
 const Dashboard: React.FC = () => {
   const { accessToken } = useAuth();
-  // console.log(accessToken);
 
   const [savedTracks, setSavedTracks] = useState<Track[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
@@ -27,6 +28,11 @@ const Dashboard: React.FC = () => {
   const [description, setDescription] = useState('');
   const [collaborative, setCollaborative] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
+
+  const [activeStep, setActiveStep] = useState(0);
+  const [completed, setCompleted] = useState<{
+    [k: number]: boolean;
+  }>({});
 
   useEffect(() => {
     const getSavedTracks = async () => {
@@ -83,6 +89,32 @@ const Dashboard: React.FC = () => {
     value: string
   ) => {
     setIsPublic(value === 'public');
+  };
+
+  const totalSteps = () => {
+    return steps.length;
+  };
+
+  const completedSteps = () => {
+    return Object.keys(completed).length;
+  };
+
+  const isLastStep = () => {
+    return activeStep === totalSteps() - 1;
+  };
+
+  const allStepsCompleted = () => {
+    return completedSteps() === totalSteps();
+  };
+
+  const handleNext = () => {
+    const newActiveStep =
+      isLastStep() && !allStepsCompleted()
+        ? // It's the last step, but not all steps have been completed,
+          // find the first step that has been completed
+          steps.findIndex((step, i) => !(i in completed))
+        : activeStep + 1;
+    setActiveStep(newActiveStep);
   };
 
   return (
