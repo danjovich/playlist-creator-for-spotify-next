@@ -1,6 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { Button, TextField, Autocomplete } from '@mui/material';
+import {
+  Button,
+  Stepper,
+  StepLabel,
+  Step,
+  Typography,
+  Box
+} from '@mui/material';
 
 import useAuth from 'hooks/useAuth';
 import ArtistServices from 'services/ArtistServices';
@@ -9,10 +16,17 @@ import { Track } from 'interfaces';
 
 import TopBar from 'components/TopBar';
 import ProfileButton from 'components/ProfileButton';
-import LinearProgressWithLabel from 'components/LinearProgressWithLabel';
-import RadioGroupWithLabel from './components/RadioGroupWithLabel/RadioGroupWithLabel';
+import StepComponent from './components/StepComponent';
+import LoadSongsAndGenres from './components/LoadSongsAndGenres';
+import ChooseAGenre from './components/ChooseAGenre';
+import ChooseTheDetails from './components/ChooseTheDetails';
 
-const steps = ['Load your songs library', 'Choose a genre', 'Choose the details', 'Create the playlist!'];
+const steps = [
+  'Load your songs library',
+  'Choose a genre',
+  'Choose the details',
+  'Create the playlist!'
+];
 
 const Dashboard: React.FC = () => {
   const { accessToken } = useAuth();
@@ -30,9 +44,6 @@ const Dashboard: React.FC = () => {
   const [isPublic, setIsPublic] = useState(true);
 
   const [activeStep, setActiveStep] = useState(0);
-  const [completed, setCompleted] = useState<{
-    [k: number]: boolean;
-  }>({});
 
   useEffect(() => {
     const getSavedTracks = async () => {
@@ -73,83 +84,61 @@ const Dashboard: React.FC = () => {
     });
   };
 
-  const onChangeGenre = (e: React.SyntheticEvent<Element, Event>) => {
-    setGenre((e.target as HTMLElement).innerText);
-  };
-
-  const onChangeCollaborative = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    value: string
-  ) => {
-    setCollaborative(value === 'collaborative');
-  };
-
-  const onChangePublic = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    value: string
-  ) => {
-    setIsPublic(value === 'public');
-  };
-
-  const totalSteps = () => {
-    return steps.length;
-  };
-
-  const completedSteps = () => {
-    return Object.keys(completed).length;
-  };
-
-  const isLastStep = () => {
-    return activeStep === totalSteps() - 1;
-  };
-
-  const allStepsCompleted = () => {
-    return completedSteps() === totalSteps();
-  };
-
-  const handleNext = () => {
-    const newActiveStep =
-      isLastStep() && !allStepsCompleted()
-        ? // It's the last step, but not all steps have been completed,
-          // find the first step that has been completed
-          steps.findIndex((step, i) => !(i in completed))
-        : activeStep + 1;
-    setActiveStep(newActiveStep);
+  const handleReset = () => {
+    setActiveStep(0);
   };
 
   return (
     <>
       <TopBar rightButton={<ProfileButton />} />
-      <LinearProgressWithLabel value={tracksProgress} />
-      <LinearProgressWithLabel value={genresProgress} />
-      <Autocomplete
-        options={genres}
-        onChange={onChangeGenre}
-        renderInput={(params) => (
-          <TextField {...params} label="Genre" variant="outlined" />
-        )}
-      />
-      <TextField
-        label="Name"
-        variant="outlined"
-        onChange={(e) => setName(e.target.value)}
-      />
-      <TextField
-        label="Description"
-        variant="outlined"
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <RadioGroupWithLabel
-        onChange={onChangeCollaborative}
-        label="Collaborative?"
-        fields={['Collaborative', 'Not Collaborative']}
-      />
-      <RadioGroupWithLabel
-        onChange={onChangePublic}
-        label="Public or private?"
-        fields={['Public', 'Private']}
-      />
-      <Button onClick={createPlaylist}>Create Playlist</Button>
+      <Stepper activeStep={activeStep}>
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel>{label}</StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+      {activeStep === steps.length ? (
+        <>
+          <Typography sx={{ mt: 2, mb: 1 }}>
+            All steps completed - you&apos;re finished
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+            <Box sx={{ flex: '1 1 auto' }} />
+            <Button onClick={handleReset}>Reset</Button>
+          </Box>
+        </>
+      ) : (
+        <StepComponent
+          content={
+            (activeStep === 0 && (
+              <LoadSongsAndGenres
+                genresProgress={genresProgress}
+                tracksProgress={tracksProgress}
+              />
+            )) ||
+            (activeStep === 1 && (
+              <ChooseAGenre genres={genres} setGenre={setGenre} />
+            )) ||
+            (activeStep === 2 && (
+              <ChooseTheDetails
+                setCollaborative={setCollaborative}
+                setDescription={setDescription}
+                setIsPublic={setIsPublic}
+                setName={setName}
+              />
+            )) || <Button onClick={createPlaylist}>Create Playlist</Button>
+          }
+          activeStep={activeStep}
+          setActiveStep={setActiveStep}
+          steps={steps}
+          nextDisabled={
+            (activeStep === 0 && genresProgress < 100) ||
+            (activeStep === 1 && (genre === '' || !genre)) ||
+            (activeStep === 2 && (name === '' || !name))
+          }
+        />
+      )}
     </>
   );
 };
